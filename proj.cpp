@@ -1,6 +1,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <set>
 using namespace std;
 
 struct slot
@@ -52,6 +57,19 @@ int main()
 	struct bucket *s_uid = (struct bucket *)malloc(sizeof(struct bucket) * 10);
 	struct bucket *s_no = (struct bucket *)malloc(sizeof(struct bucket) * 10);
 	struct bucket *s_isbn = (struct bucket *)malloc(sizeof(struct bucket) * 10);
+	
+	map<string, vector<string> > book;
+	map<string, vector<string> > sell;
+	
+	string book_attr[] = {"isbn", "author", "title", "price", "subject"};
+	string sell_attr[] = {"uid", "no", "isbn_no"};
+	set<string> bookset(book_attr, book_attr+5);
+	set<string> sellset(sell_attr, sell_attr+3);
+	if(sellset.find("isbn_no") != sellset.end())
+	  cout << "yes\n";
+	else
+	  cout << "no\n";
+
 	//initialize all hash tables
 	for(int i = 0; i < 10; ++i)
 	{
@@ -73,6 +91,7 @@ int main()
 		s_isbn[i].num = 0;
 	}
 
+	//hash tables for books
 	char tmp[150], token[100];
 	int len, i, j = 0, bucket, row = 0;
 	fgets(tmp, sizeof(tmp), fbookr);
@@ -83,9 +102,12 @@ int main()
 		//isbn
 		for(i = 0; i < len; ++i)
 		{
-			if(tmp[i] == '|' || tmp[i] == '\n')
+			if(tmp[i] == '|')
 			{
 				token[j] = '\0';
+				//for database table
+				book["isbn"].push_back(string(token));
+				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
 				for(int k = 0; k <= strlen(token); ++k)
@@ -107,9 +129,12 @@ int main()
 		//author
 		for(; i < len; ++i)
 		{
-			if(tmp[i] == '|' || tmp[i] == '\n')
+			if(tmp[i] == '|')
 			{
 				token[j] = '\0';
+				//for database table
+				book["author"].push_back(string(token));
+				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
 				for(int k = 0; k <= strlen(token); ++k)
@@ -131,9 +156,12 @@ int main()
 		//title
 		for(; i < len; ++i)
 		{
-			if(tmp[i] == '|' || tmp[i] == '\n')
+			if(tmp[i] == '|')
 			{
 				token[j] = '\0';
+				//for database table
+				book["title"].push_back(string(token));
+				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
 				for(int k = 0; k <= strlen(token); ++k)
@@ -155,9 +183,12 @@ int main()
 		//price
 		for(; i < len; ++i)
 		{
-			if(tmp[i] == '|' || tmp[i] == '\n')
+			if(tmp[i] == '|')
 			{
 				token[j] = '\0';
+				//for database table
+				book["price"].push_back(string(token));
+				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
 				for(int k = 0; k <= strlen(token); ++k)
@@ -182,6 +213,9 @@ int main()
 			if(tmp[i] <= 13)
 			{
 				token[j] = '\0';
+				//for database table
+				book["subject"].push_back(string(token));
+				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
 				for(int k = 0; k <= strlen(token); ++k)
@@ -215,6 +249,9 @@ int main()
 			if(tmp[i] == '|')
 			{
 				token[j] = '\0';
+				//for database table
+				sell["uid"].push_back(string(token));
+				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
 				for(int k = 0; k <= strlen(token); ++k)
@@ -238,6 +275,9 @@ int main()
 			if(tmp[i] == '|')
 			{
 				token[j] = '\0';
+				//for database table
+				sell["no"].push_back(string(token));
+				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
 				for(int k = 0; k <= strlen(token); ++k)
@@ -255,12 +295,15 @@ int main()
 			else
 				token[j++] = tmp[i];
 		}
-		//isbn
+		//isbn_no
 		for(; i < len; ++i)
 		{
 			if(tmp[i] <= 13)
 			{
 				token[j] = '\0';
+				//for database table
+				sell["isbn_no"].push_back(string(token));
+				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
 				for(int k = 0; k <= strlen(token); ++k)
@@ -398,11 +441,65 @@ int main()
 	fclose(fs3);
 
 	//process command
+	vector<string> attrs;
+	vector<string> tables;
+	bool distinct, no_con;
+	char ch;
 	while(1)
 	{
+		no_con = false;
+		distinct = false;
 		scanf("%s", tmp);
 		if(tmp[0] == '0')
 		  break;
+		
+		//read in the query
+		if(strcmp(tmp, "SELECT") == 0)
+		{
+			cin >> tmp;
+			if(strcmp(tmp, "DISTINCT") == 0)
+			{
+				distinct = true;
+				cin >> tmp;
+			}
+			//read all the query attributes
+			while(1)
+			{
+				if(strcmp(tmp, "FROM") == 0)
+				  break;
+				attrs.push_back(string(tmp));
+				cin >> tmp;
+			}
+			//read all query tables
+			while(1)
+			{
+				scanf("%s", tmp);
+				if(strcmp(tmp, "WHERE") == 0)
+				  break;
+				
+				if(tmp[strlen(tmp)-1] == ',')
+				{
+					tmp[strlen(tmp)-1] = '\0';
+					tables.push_back(string(tmp));	
+				}
+				else if(tmp[strlen(tmp)-1] == ';')	//end of line
+				{
+					no_con = true;
+					tmp[strlen(tmp)-1] = '\0';
+					tables.push_back(string(tmp));
+					break;
+				}
+				else
+				  tables.push_back(string(tmp));
+			}
+			//read all the query WHERE condition (if any)
+		}
+		else
+		  printf("Invalid command.\n");
+		
+		//process the query
+		for(int i = 0; i < tables.size(); ++i)
+		  cout << tables.at(i) << endl;
 	}
 
 	return 0;
