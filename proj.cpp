@@ -21,7 +21,7 @@ struct bucket
 	struct slot *head;
 };
 
-int hash33(char *key)
+int hash33(const char *key)
 {
 	int i, k;
 	unsigned int hv = 0;
@@ -501,19 +501,51 @@ int main()
 				  q_tables.push_back(string(tmp));
 			}
 			
-			//read all the query WHERE condition (if any)
-			if(q_tables.size() == 1)	//retrieve from one table
+			//read all the query WHERE condition
+			if(!no_con)
 			{
-				while(1)
+				if(q_tables.size() == 1)	//retrieve from one table
 				{
-					scanf("%s", tmp);	//read in the target attrbute
-					bucket = hash33(tmp);
-
-					scanf("%s", tmp);	//read the =
+					scanf("%s", tmp);	//target attribute
+					string target_attr(tmp);
+					scanf("%s", tmp);	//exclude out the =
+					scanf("%s", tmp);	//target value
+					string tmp_target_val(tmp);
+					//clear out the '' around the target value
+					int sub_len;
+					bool have_and = false; //check if the where clause have more than one condition
+					if(tmp[strlen(tmp)-1] == ';')
+					{
+						sub_len = strlen(tmp) - 3;
+						have_and = true;
+					}
+					else
+						sub_len = strlen(tmp) - 2;
+					string target_val = tmp_target_val.substr(1, sub_len);
+					bucket = hash33(target_val.c_str());
+					struct slot *ptr = hash_table[target_attr][bucket].head;
+					for(int j = 0; j < hash_table[target_attr][bucket].num; ++j)
+					{
+						if(target_val.compare(ptr->value) == 0)
+						  candidate.push_back(ptr->row - 1);	//since row begins with 1, but vector is indexed begining with 0
+						ptr = ptr->next;
+					}
+/*
+					if(have_and)
+					{
+						
+						scanf("%s", tmp);	//exclude out AND
+						scanf("%s", tmp);	//target attribute
+						string target_attr(tmp);
+						scanf("%s", tmp);	//exclude out the =
+						scanf("%s", tmp);	//target value
+						
+					}
+*/
 				}
-			}
-			else
-			{
+				else
+				{
+				}
 			}
 
 		}
@@ -574,6 +606,26 @@ int main()
 		}
 		else	//with WHERE clause
 		{
+				string target_table(q_tables.at(0));
+				for(int i = 0; i < q_attrs.size(); ++i)
+				{
+					if(q_attrs.at(i).compare("title") == 0)
+					  printf("%-65s", q_attrs.at(i).c_str());
+					else
+					  printf("%-25s", q_attrs.at(i).c_str());
+				}
+				printf("\n");
+				for(int i = 0; i < candidate.size(); ++i)
+				{
+					for(int j = 0; j < q_attrs.size(); ++j)
+				  	{
+						if(q_attrs.at(j).compare("title") == 0)
+						  printf("%-65s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)).c_str());
+						else
+						  printf("%-25s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)).c_str());
+					}
+					printf("\n");
+				}
 			
 		}
 
