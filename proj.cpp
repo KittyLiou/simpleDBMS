@@ -48,47 +48,45 @@ int main()
 	FILE *fs1 = fopen("sellRecord_uid.txt", "w+");
 	FILE *fs2 = fopen("sellRecord_no.txt", "w+");
 	FILE *fs3 = fopen("sellRecord_isbn_no.txt", "w+");
-
-	struct bucket *b_isbn = (struct bucket *)malloc(sizeof(struct bucket) * 10);
-	struct bucket *b_auth = (struct bucket *)malloc(sizeof(struct bucket) * 10);
-	struct bucket *b_title = (struct bucket *)malloc(sizeof(struct bucket) * 10);
-	struct bucket *b_price = (struct bucket *)malloc(sizeof(struct bucket) * 10);
-	struct bucket *b_sub = (struct bucket *)malloc(sizeof(struct bucket) * 10);
-	struct bucket *s_uid = (struct bucket *)malloc(sizeof(struct bucket) * 10);
-	struct bucket *s_no = (struct bucket *)malloc(sizeof(struct bucket) * 10);
-	struct bucket *s_isbn = (struct bucket *)malloc(sizeof(struct bucket) * 10);
 	
-	map<string, vector<string> > book;
-	map<string, vector<string> > sell;
+	map<string, struct bucket *> hash_table;
+	hash_table["isbn"] = (struct bucket *)malloc(sizeof(struct bucket) * 10);
+	hash_table["author"] = (struct bucket *)malloc(sizeof(struct bucket) * 10);
+	hash_table["title"] = (struct bucket *)malloc(sizeof(struct bucket) * 10);
+	hash_table["price"] = (struct bucket *)malloc(sizeof(struct bucket) * 10);
+	hash_table["subject"] = (struct bucket *)malloc(sizeof(struct bucket) * 10);
+	hash_table["uid"] = (struct bucket *)malloc(sizeof(struct bucket) * 10);
+	hash_table["no"] = (struct bucket *)malloc(sizeof(struct bucket) * 10);
+	hash_table["isbn_no"] = (struct bucket *)malloc(sizeof(struct bucket) * 10);
+	
+	map<string, map<string, vector<string> > > tables;
+	map<string, int> table_row_num;
 	
 	string book_attr[] = {"isbn", "author", "title", "price", "subject"};
 	string sell_attr[] = {"uid", "no", "isbn_no"};
-	set<string> bookset(book_attr, book_attr+5);
-	set<string> sellset(sell_attr, sell_attr+3);
-	if(sellset.find("isbn_no") != sellset.end())
-	  cout << "yes\n";
-	else
-	  cout << "no\n";
+	map<string, set<string> > sets;
+	sets["books"]=  set<string>(book_attr, book_attr+5);
+	sets["sellRecord"]=  set<string>(sell_attr, sell_attr+3);
 
 	//initialize all hash tables
 	for(int i = 0; i < 10; ++i)
 	{
-		b_isbn[i].head = NULL;
-		b_isbn[i].num = 0;
-		b_auth[i].head = NULL;
-		b_auth[i].num = 0;
-		b_title[i].head = NULL;
-		b_title[i].num = 0;
-		b_price[i].head = NULL;
-		b_price[i].num = 0;
-		b_sub[i].head = NULL;
-		b_sub[i].num = 0;
-		s_uid[i].head = NULL;
-		s_uid[i].num = 0;
-		s_no[i].head = NULL;
-		s_no[i].num = 0;
-		s_isbn[i].head = NULL;
-		s_isbn[i].num = 0;
+		hash_table["isbn"][i].head = NULL;
+		hash_table["isbn"][i].num = 0;
+		hash_table["author"][i].head = NULL;
+		hash_table["author"][i].num = 0;
+		hash_table["title"][i].head = NULL;
+		hash_table["title"][i].num = 0;
+		hash_table["price"][i].head = NULL;
+		hash_table["price"][i].num = 0;
+		hash_table["subject"][i].head = NULL;
+		hash_table["subject"][i].num = 0;
+		hash_table["uid"][i].head = NULL;
+		hash_table["uid"][i].num = 0;
+		hash_table["no"][i].head = NULL;
+		hash_table["no"][i].num = 0;
+		hash_table["isbn_no"][i].head = NULL;
+		hash_table["isbn_no"][i].num = 0;
 	}
 
 	//hash tables for books
@@ -97,6 +95,8 @@ int main()
 	fgets(tmp, sizeof(tmp), fbookr);
 	while(fgets(tmp, sizeof(tmp), fbookr) != NULL)
 	{
+		if(tmp[0] <= 13)	//used to exclude blank line at the end of file
+		  break;
 		row++;
 		len = strlen(tmp);
 		//isbn
@@ -106,7 +106,7 @@ int main()
 			{
 				token[j] = '\0';
 				//for database table
-				book["isbn"].push_back(string(token));
+				tables["books"]["isbn"].push_back(string(token));
 				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
@@ -115,9 +115,9 @@ int main()
 				struct slot *new_slot = (struct slot *)malloc(sizeof(struct slot));
 				new_slot->value = value;
 				new_slot->row = row;
-				new_slot->next = b_isbn[bucket].head;
-				b_isbn[bucket].head = new_slot;
-				b_isbn[bucket].num++;
+				new_slot->next = hash_table["isbn"][bucket].head;
+				hash_table["isbn"][bucket].head = new_slot;
+				hash_table["isbn"][bucket].num++;
 				j = 0;
 				i++;
 				break;
@@ -133,7 +133,7 @@ int main()
 			{
 				token[j] = '\0';
 				//for database table
-				book["author"].push_back(string(token));
+				tables["books"]["author"].push_back(string(token));
 				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
@@ -142,9 +142,9 @@ int main()
 				struct slot *new_slot = (struct slot *)malloc(sizeof(struct slot));
 				new_slot->value = value;
 				new_slot->row = row;
-				new_slot->next = b_auth[bucket].head;
-				b_auth[bucket].head = new_slot;
-				b_auth[bucket].num++;
+				new_slot->next = hash_table["author"][bucket].head;
+				hash_table["author"][bucket].head = new_slot;
+				hash_table["author"][bucket].num++;
 				j = 0;
 				i++;
 				break;
@@ -160,7 +160,7 @@ int main()
 			{
 				token[j] = '\0';
 				//for database table
-				book["title"].push_back(string(token));
+				tables["books"]["title"].push_back(string(token));
 				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
@@ -169,9 +169,9 @@ int main()
 				struct slot *new_slot = (struct slot *)malloc(sizeof(struct slot));
 				new_slot->value = value;
 				new_slot->row = row;
-				new_slot->next = b_title[bucket].head;
-				b_title[bucket].head = new_slot;
-				b_title[bucket].num++;
+				new_slot->next = hash_table["title"][bucket].head;
+				hash_table["title"][bucket].head = new_slot;
+				hash_table["title"][bucket].num++;
 				j = 0;
 				i++;
 				break;
@@ -187,7 +187,7 @@ int main()
 			{
 				token[j] = '\0';
 				//for database table
-				book["price"].push_back(string(token));
+				tables["books"]["price"].push_back(string(token));
 				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
@@ -196,9 +196,9 @@ int main()
 				struct slot *new_slot = (struct slot *)malloc(sizeof(struct slot));
 				new_slot->value = value;
 				new_slot->row = row;
-				new_slot->next = b_price[bucket].head;
-				b_price[bucket].head = new_slot;
-				b_price[bucket].num++;
+				new_slot->next = hash_table["price"][bucket].head;
+				hash_table["price"][bucket].head = new_slot;
+				hash_table["price"][bucket].num++;
 				j = 0;
 				i++;
 				break;
@@ -214,7 +214,7 @@ int main()
 			{
 				token[j] = '\0';
 				//for database table
-				book["subject"].push_back(string(token));
+				tables["books"]["subject"].push_back(string(token));
 				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
@@ -223,9 +223,9 @@ int main()
 				struct slot *new_slot = (struct slot *)malloc(sizeof(struct slot));
 				new_slot->value = value;
 				new_slot->row = row;
-				new_slot->next = b_sub[bucket].head;
-				b_sub[bucket].head = new_slot;
-				b_sub[bucket].num++;
+				new_slot->next = hash_table["subject"][bucket].head;
+				hash_table["subject"][bucket].head = new_slot;
+				hash_table["subject"][bucket].num++;
 				//printf("len : %d, %d\n", tmp[strlen(tmp)-2], tmp[strlen(tmp)-1]);
 				j = 0;
 				i++;
@@ -235,12 +235,15 @@ int main()
 				token[j++] = tmp[i];
 		}
 	}
+	table_row_num["books"] = row;
 
 	//hash tables for sellRecord
 	row = 0;
 	fgets(tmp, sizeof(tmp), fsellr);
 	while(fgets(tmp, sizeof(tmp), fsellr) != NULL)
 	{
+		if(tmp[0] <= 13)	//used to exclude blank line at the end of file
+		  break;
 		row++;
 		len = strlen(tmp);
 		//uid
@@ -250,7 +253,7 @@ int main()
 			{
 				token[j] = '\0';
 				//for database table
-				sell["uid"].push_back(string(token));
+				tables["sellRecord"]["uid"].push_back(string(token));
 				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
@@ -259,9 +262,9 @@ int main()
 				struct slot *new_slot = (struct slot *)malloc(sizeof(struct slot));
 				new_slot->value = value;
 				new_slot->row = row;
-				new_slot->next = s_uid[bucket].head;
-				s_uid[bucket].head = new_slot;
-				s_uid[bucket].num++;
+				new_slot->next = hash_table["uid"][bucket].head;
+				hash_table["uid"][bucket].head = new_slot;
+				hash_table["uid"][bucket].num++;
 				j = 0;
 				i++;
 				break;
@@ -276,7 +279,7 @@ int main()
 			{
 				token[j] = '\0';
 				//for database table
-				sell["no"].push_back(string(token));
+				tables["sellRecord"]["no"].push_back(string(token));
 				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
@@ -285,9 +288,9 @@ int main()
 				struct slot *new_slot = (struct slot *)malloc(sizeof(struct slot));
 				new_slot->value = value;
 				new_slot->row = row;
-				new_slot->next = s_no[bucket].head;
-				s_no[bucket].head = new_slot;
-				s_no[bucket].num++;
+				new_slot->next = hash_table["no"][bucket].head;
+				hash_table["no"][bucket].head = new_slot;
+				hash_table["no"][bucket].num++;
 				j = 0;
 				i++;
 				break;
@@ -302,7 +305,7 @@ int main()
 			{
 				token[j] = '\0';
 				//for database table
-				sell["isbn_no"].push_back(string(token));
+				tables["sellRecord"]["isbn_no"].push_back(string(token));
 				//for hash table
 				bucket = hash33(token);
 				char *value = (char *)malloc(sizeof(char) * strlen(token) + 1);
@@ -311,9 +314,9 @@ int main()
 				struct slot *new_slot = (struct slot *)malloc(sizeof(struct slot));
 				new_slot->value = value;
 				new_slot->row = row;
-				new_slot->next = s_isbn[bucket].head;
-				s_isbn[bucket].head = new_slot;
-				s_isbn[bucket].num++;
+				new_slot->next = hash_table["isbn_no"][bucket].head;
+				hash_table["isbn_no"][bucket].head = new_slot;
+				hash_table["isbn_no"][bucket].num++;
 				//printf("len : %d, %d\n", tmp[strlen(tmp)-2], tmp[strlen(tmp)-1]);
 				j = 0;
 				i++;
@@ -324,15 +327,17 @@ int main()
 		}
 
 	}
+	table_row_num["sellRecord"] = row;
+	cout << table_row_num["sellRecord"] << endl;
 	
 	for(int i = 0; i < 10; ++i)
 	{
 		//print the isbn hash table
 		fprintf(fb1, "Bucket %d\t", i);
-		struct slot *ptr = b_isbn[i].head;
-		for(int j = 0; j < b_isbn[i].num; ++j)
+		struct slot *ptr = hash_table["isbn"][i].head;
+		for(int j = 0; j < hash_table["isbn"][i].num; ++j)
 		{
-			if(j != b_isbn[i].num-1)
+			if(j != hash_table["isbn"][i].num-1)
 			  fprintf(fb1, "<%s>, ", ptr->value);
 			else
 			  fprintf(fb1, "<%s>", ptr->value);
@@ -342,10 +347,10 @@ int main()
 
 		//print the author hash table
 		fprintf(fb2, "Bucket %d\t", i);
-		ptr = b_auth[i].head;
-		for(int j = 0; j < b_auth[i].num; ++j)
+		ptr = hash_table["author"][i].head;
+		for(int j = 0; j < hash_table["author"][i].num; ++j)
 		{
-			if(j != b_auth[i].num-1)
+			if(j != hash_table["author"][i].num-1)
 			  fprintf(fb2, "<%s>, ", ptr->value);
 			else
 			  fprintf(fb2, "<%s>", ptr->value);
@@ -355,10 +360,10 @@ int main()
 		
 		//print the title hash table
 		fprintf(fb3, "Bucket %d\t", i);
-		ptr = b_title[i].head;
-		for(int j = 0; j < b_title[i].num; ++j)
+		ptr = hash_table["title"][i].head;
+		for(int j = 0; j < hash_table["title"][i].num; ++j)
 		{
-			if(j != b_title[i].num-1)
+			if(j != hash_table["title"][i].num-1)
 			  fprintf(fb3, "<%s>, ", ptr->value);
 			else
 			  fprintf(fb3, "<%s>", ptr->value);
@@ -368,10 +373,10 @@ int main()
 	
 		//print the price hash table
 		fprintf(fb4, "Bucket %d\t", i);
-		ptr = b_price[i].head;
-		for(int j = 0; j < b_price[i].num; ++j)
+		ptr = hash_table["price"][i].head;
+		for(int j = 0; j < hash_table["price"][i].num; ++j)
 		{
-			if(j != b_price[i].num-1)
+			if(j != hash_table["price"][i].num-1)
 			  fprintf(fb4, "<%s>, ", ptr->value);
 			else
 			  fprintf(fb4, "<%s>", ptr->value);
@@ -381,10 +386,10 @@ int main()
 
 		//print the subject hash table
 		fprintf(fb5, "Bucket %d\t", i);
-		ptr = b_sub[i].head;
-		for(int j = 0; j < b_sub[i].num; ++j)
+		ptr = hash_table["subject"][i].head;
+		for(int j = 0; j < hash_table["subject"][i].num; ++j)
 		{
-			if(j != b_sub[i].num-1)
+			if(j != hash_table["subject"][i].num-1)
 			  fprintf(fb5, "<%s>, ", ptr->value);
 			else
 			  fprintf(fb5, "<%s>", ptr->value);
@@ -394,10 +399,10 @@ int main()
 		
 		//print the sell_uid hash table
 		fprintf(fs1, "Bucket %d\t", i);
-		ptr = s_uid[i].head;
-		for(int j = 0; j < s_uid[i].num; ++j)
+		ptr = hash_table["uid"][i].head;
+		for(int j = 0; j < hash_table["uid"][i].num; ++j)
 		{
-			if(j != s_uid[i].num-1)
+			if(j != hash_table["uid"][i].num-1)
 			  fprintf(fs1, "<%s>, ", ptr->value);
 			else
 			  fprintf(fs1, "<%s>", ptr->value);
@@ -407,10 +412,10 @@ int main()
 		
 		//print the sell_no hash table
 		fprintf(fs2, "Bucket %d\t", i);
-		ptr = s_no[i].head;
-		for(int j = 0; j < s_no[i].num; ++j)
+		ptr = hash_table["no"][i].head;
+		for(int j = 0; j < hash_table["no"][i].num; ++j)
 		{
-			if(j != s_no[i].num-1)
+			if(j != hash_table["no"][i].num-1)
 			  fprintf(fs2, "<%s>, ", ptr->value);
 			else
 			  fprintf(fs2, "<%s>", ptr->value);
@@ -420,10 +425,10 @@ int main()
 		
 		//print the sell_isbn hash table
 		fprintf(fs3, "Bucket %d\t", i);
-		ptr = s_isbn[i].head;
-		for(int j = 0; j < s_isbn[i].num; ++j)
+		ptr = hash_table["isbn_no"][i].head;
+		for(int j = 0; j < hash_table["isbn_no"][i].num; ++j)
 		{
-			if(j != s_isbn[i].num-1)
+			if(j != hash_table["isbn_no"][i].num-1)
 			  fprintf(fs3, "<%s>, ", ptr->value);
 			else
 			  fprintf(fs3, "<%s>", ptr->value);
@@ -441,8 +446,9 @@ int main()
 	fclose(fs3);
 
 	//process command
-	vector<string> attrs;
-	vector<string> tables;
+	vector<string> q_attrs;
+	vector<string> q_tables;
+	vector<int> candidate;
 	bool distinct, no_con;
 	char ch;
 	while(1)
@@ -467,7 +473,9 @@ int main()
 			{
 				if(strcmp(tmp, "FROM") == 0)
 				  break;
-				attrs.push_back(string(tmp));
+				if(tmp[strlen(tmp)-1] == ',')
+				  tmp[strlen(tmp)-1] = '\0';
+				q_attrs.push_back(string(tmp));
 				cin >> tmp;
 			}
 			//read all query tables
@@ -480,26 +488,100 @@ int main()
 				if(tmp[strlen(tmp)-1] == ',')
 				{
 					tmp[strlen(tmp)-1] = '\0';
-					tables.push_back(string(tmp));	
+					q_tables.push_back(string(tmp));	
 				}
 				else if(tmp[strlen(tmp)-1] == ';')	//end of line
 				{
 					no_con = true;
 					tmp[strlen(tmp)-1] = '\0';
-					tables.push_back(string(tmp));
+					q_tables.push_back(string(tmp));
 					break;
 				}
 				else
-				  tables.push_back(string(tmp));
+				  q_tables.push_back(string(tmp));
 			}
+			
 			//read all the query WHERE condition (if any)
+			if(q_tables.size() == 1)	//retrieve from one table
+			{
+				while(1)
+				{
+					scanf("%s", tmp);	//read in the target attrbute
+					bucket = hash33(tmp);
+
+					scanf("%s", tmp);	//read the =
+				}
+			}
+			else
+			{
+			}
+
 		}
 		else
 		  printf("Invalid command.\n");
 		
 		//process the query
-		for(int i = 0; i < tables.size(); ++i)
-		  cout << tables.at(i) << endl;
+		if(no_con)	//no WHERE clause
+		{
+			if(q_attrs.at(0).compare("*") == 0)	//retrieve all attributes
+			{
+				string target_table(q_tables.at(0));
+				//print out the titles
+				for(set<string>::iterator it = sets[target_table].begin(); it != sets[target_table].end(); ++it)
+				{
+					if((*it).compare("title") == 0)
+					  printf("%-65s", (*it).c_str());
+					else
+					  printf("%-25s", (*it).c_str());
+				}
+				printf("\n");
+
+				for(int i = 0; i < table_row_num[target_table]; ++i)
+				{
+					for(set<string>::iterator it = sets[target_table].begin(); it != sets[target_table].end(); ++it)
+				  	{
+						if((*it).compare("title") == 0)
+						  printf("%-65s", tables[target_table][*it].at(i).c_str());
+						else
+						  printf("%-25s", tables[target_table][*it].at(i).c_str());
+					}
+					printf("\n");
+				}
+			}
+			else	//retrieve part of attributes
+			{
+				string target_table(q_tables.at(0));
+				for(int i = 0; i < q_attrs.size(); ++i)
+				{
+					if(q_attrs.at(i).compare("title") == 0)
+					  printf("%-65s", q_attrs.at(i).c_str());
+					else
+					  printf("%-25s", q_attrs.at(i).c_str());
+				}
+				printf("\n");
+				for(int i = 0; i < table_row_num[target_table]; ++i)
+				{
+					for(int j = 0; j < q_attrs.size(); ++j)
+				  	{
+						if(q_attrs.at(j).compare("title") == 0)
+						  printf("%-65s", tables[target_table][q_attrs.at(j)].at(i).c_str());
+						else
+						  printf("%-25s", tables[target_table][q_attrs.at(j)].at(i).c_str());
+					}
+					printf("\n");
+				}
+			}
+		}
+		else	//with WHERE clause
+		{
+			
+		}
+
+		//clear the query vectors
+		while(!q_attrs.empty())
+		  q_attrs.pop_back();
+		while(!q_tables.empty())
+		  q_tables.pop_back();
 	}
 
 	return 0;
