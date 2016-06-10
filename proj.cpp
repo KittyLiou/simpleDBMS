@@ -226,7 +226,6 @@ int main()
 				new_slot->next = hash_table["subject"][bucket].head;
 				hash_table["subject"][bucket].head = new_slot;
 				hash_table["subject"][bucket].num++;
-				//printf("len : %d, %d\n", tmp[strlen(tmp)-2], tmp[strlen(tmp)-1]);
 				j = 0;
 				i++;
 				break;
@@ -317,7 +316,6 @@ int main()
 				new_slot->next = hash_table["isbn_no"][bucket].head;
 				hash_table["isbn_no"][bucket].head = new_slot;
 				hash_table["isbn_no"][bucket].num++;
-				//printf("len : %d, %d\n", tmp[strlen(tmp)-2], tmp[strlen(tmp)-1]);
 				j = 0;
 				i++;
 				break;
@@ -548,10 +546,10 @@ int main()
 							sub_len = strlen(tmp) - 2;
 						string target_val = tmp_target_val.substr(1, sub_len);
 						bucket = hash33(target_val.c_str());
-						struct slot *ptr = hash_table[target_attr][bucket].head;
 						bool qualified = false;
 						for(int i =  0; i < candidate.size(); ++i)
 						{
+							struct slot *ptr = hash_table[target_attr][bucket].head;
 							for(int j = 0; j < hash_table[target_attr][bucket].num; ++j)
 							{
 								if(target_val.compare(ptr->value) == 0 && candidate.at(i) == ptr->row)
