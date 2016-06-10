@@ -513,11 +513,11 @@ int main()
 					string tmp_target_val(tmp);
 					//clear out the '' around the target value
 					int sub_len;
-					bool have_and = false; //check if the where clause have more than one condition
+					bool end = false; //check if the where clause have more than one condition
 					if(tmp[strlen(tmp)-1] == ';')
 					{
 						sub_len = strlen(tmp) - 3;
-						have_and = true;
+						end = true;
 					}
 					else
 						sub_len = strlen(tmp) - 2;
@@ -527,24 +527,53 @@ int main()
 					for(int j = 0; j < hash_table[target_attr][bucket].num; ++j)
 					{
 						if(target_val.compare(ptr->value) == 0)
-						  candidate.push_back(ptr->row - 1);	//since row begins with 1, but vector is indexed begining with 0
+						  candidate.push_back(ptr->row);	//since row begins with 1, but vector is indexed begining with 0
 						ptr = ptr->next;
 					}
-/*
-					if(have_and)
+
+					while(!end)
 					{
-						
 						scanf("%s", tmp);	//exclude out AND
 						scanf("%s", tmp);	//target attribute
 						string target_attr(tmp);
 						scanf("%s", tmp);	//exclude out the =
 						scanf("%s", tmp);	//target value
-						
+						string tmp_target_val(tmp);
+						if(tmp[strlen(tmp)-1] == ';')
+						{
+							sub_len = strlen(tmp) - 3;
+							end = true;
+						}
+						else
+							sub_len = strlen(tmp) - 2;
+						string target_val = tmp_target_val.substr(1, sub_len);
+						bucket = hash33(target_val.c_str());
+						struct slot *ptr = hash_table[target_attr][bucket].head;
+						bool qualified = false;
+						for(int i =  0; i < candidate.size(); ++i)
+						{
+							for(int j = 0; j < hash_table[target_attr][bucket].num; ++j)
+							{
+								if(target_val.compare(ptr->value) == 0 && candidate.at(i) == ptr->row)
+								{
+									qualified = true;
+									break;
+								}
+								ptr = ptr->next;
+							}
+							if(!qualified)
+							{
+								candidate.erase(candidate.begin()+i);
+								i--;
+							}
+							qualified = false;
+						}
 					}
-*/
+
 				}
 				else
 				{
+					
 				}
 			}
 
@@ -620,9 +649,9 @@ int main()
 					for(int j = 0; j < q_attrs.size(); ++j)
 				  	{
 						if(q_attrs.at(j).compare("title") == 0)
-						  printf("%-65s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)).c_str());
+						  printf("%-65s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)-1).c_str());
 						else
-						  printf("%-25s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)).c_str());
+						  printf("%-25s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)-1).c_str());
 					}
 					printf("\n");
 				}
@@ -634,6 +663,8 @@ int main()
 		  q_attrs.pop_back();
 		while(!q_tables.empty())
 		  q_tables.pop_back();
+		while(!candidate.empty())
+		  candidate.pop_back();
 	}
 
 	return 0;
