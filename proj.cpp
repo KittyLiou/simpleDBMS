@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <stdexcept>
 using namespace std;
 
 struct slot
@@ -33,6 +34,14 @@ int hash33(const char *key)
 	hv = hv % 10;
 	return hv;
 
+}
+
+string belong_table(map<string, set<string> > sets, string s)
+{
+	if(sets["books"].find(s) != sets["books"].end())
+	  return string("books");
+	if(sets["sellRecord"].find(s) != sets["sellRecord"].end())
+	  return string("sellRecord");
 }
 
 int main()
@@ -326,7 +335,6 @@ int main()
 
 	}
 	table_row_num["sellRecord"] = row;
-	cout << table_row_num["sellRecord"] << endl;
 	
 	for(int i = 0; i < 10; ++i)
 	{
@@ -447,6 +455,7 @@ int main()
 	vector<string> q_attrs;
 	vector<string> q_tables;
 	vector<int> candidate;
+	map<string, vector<int> > potential_can, results;
 	bool distinct, no_con;
 	char ch;
 	while(1)
@@ -508,6 +517,23 @@ int main()
 					string target_attr(tmp);
 					scanf("%s", tmp);	//exclude out the =
 					scanf("%s", tmp);	//target value
+					if(tmp[0] == '\'')
+					{
+						int length = strlen(tmp);
+						if(tmp[length - 1] != '\'' && tmp[length-2] != '\'')
+						{
+							char ch = 'a';
+							while(ch != '\'')
+							{
+								scanf("%c", &ch);
+								tmp[length++] = ch;
+							}
+							scanf("%c", &ch);
+							if(ch == ';')
+							  tmp[length++] = ch;
+							tmp[length] = '\0';
+						}
+					}
 					string tmp_target_val(tmp);
 					//clear out the '' around the target value
 					int sub_len;
@@ -525,7 +551,7 @@ int main()
 					for(int j = 0; j < hash_table[target_attr][bucket].num; ++j)
 					{
 						if(target_val.compare(ptr->value) == 0)
-						  candidate.push_back(ptr->row);	//since row begins with 1, but vector is indexed begining with 0
+						  candidate.push_back(ptr->row);
 						ptr = ptr->next;
 					}
 
@@ -536,6 +562,23 @@ int main()
 						string target_attr(tmp);
 						scanf("%s", tmp);	//exclude out the =
 						scanf("%s", tmp);	//target value
+						if(tmp[0] == '\'')
+						{
+							int length = strlen(tmp);
+							if(tmp[length - 1] != '\'' && tmp[length-2] != '\'')
+							{
+								char ch = 'a';
+								while(ch != '\'')
+								{
+									scanf("%c", &ch);
+									tmp[length++] = ch;
+								}
+								scanf("%c", &ch);
+								if(ch == ';')
+								  tmp[length++] = ch;
+								tmp[length] = '\0';
+							}
+						}
 						string tmp_target_val(tmp);
 						if(tmp[strlen(tmp)-1] == ';')
 						{
@@ -567,12 +610,113 @@ int main()
 							qualified = false;
 						}
 					}
-
 				}
-				else
+				else	//WHERE clause with joint table
 				{
-					
+					bool end = false; //check if the where clause have more than one condition
+					bool join_start = false;
+					for(int i = 0; i < table_row_num[q_tables.at(0)]; ++i)
+					  potential_can[q_tables.at(0)].push_back(i);
+					for(int i = 0; i < table_row_num[q_tables.at(1)]; ++i)
+					  potential_can[q_tables.at(1)].push_back(i);
+					while(!end)
+					{
+						scanf("%s", tmp);	//target attribute
+						string target_attr(tmp);
+						scanf("%s", tmp);	//exclude out the =
+						scanf("%s", tmp);	//target value
+						if(tmp[0] == '\'')
+						{
+							int length = strlen(tmp);
+							if(tmp[length - 1] != '\'' && tmp[length-2] != '\'')
+							{
+								char ch = 'a';
+								while(ch != '\'')
+								{
+									scanf("%c", &ch);
+									tmp[length++] = ch;
+								}
+								scanf("%c", &ch);
+								if(ch == ';')
+								  tmp[length++] = ch;
+								tmp[length] = '\0';
+							}
+						}
+						if(tmp[strlen(tmp)-1] == ';')
+						{
+							tmp[strlen(tmp)-1] = '\0';
+							end = true;
+						}
+						string target_val(tmp);
+						//clear out the '' around the target value (if any)
+						if(tmp[0] == '\'')	//simple condition
+						{
+							target_val = target_val.substr(1, strlen(tmp)-2);
+							if(!join_start)
+							{
+								string t = belong_table(sets, target_attr);
+								for(int i = 0; i < potential_can[t].size(); ++i)
+								{
+									if(target_val.compare(tables[t][target_attr].at(potential_can[t].at(i))) != 0)
+									{
+										potential_can[t].erase(potential_can[t].begin()+i);
+										i--;
+									}
+								}
+							}
+							else
+							{
+								string t = belong_table(sets, target_attr);
+								for(int i = 0; i < results[t].size(); ++i)
+								{
+									if(target_val.compare(tables[t][target_attr].at(results[t].at(i))) != 0)
+									{
+										results[q_tables.at(0)].erase(results[q_tables.at(0)].begin()+i);
+										results[q_tables.at(1)].erase(results[q_tables.at(1)].begin()+i);
+										i--;
+									}
+								}
+							}
+						}
+						else	//join condition
+						{
+							if(!join_start)
+							{
+								string t1 = belong_table(sets, target_attr);
+								string t2 = belong_table(sets, target_val);
+								for(int i = 0; i < potential_can[t1].size(); ++i)
+								{
+									for(int j = 0; j < potential_can[t2].size(); ++j)
+									{
+										if(tables[t1][target_attr].at(potential_can[t1].at(i)).compare(tables[t2][target_val].at(potential_can[t2].at(j))) == 0)
+										{
+											results[t1].push_back(potential_can[t1].at(i));
+											results[t2].push_back(potential_can[t2].at(j));
+										}
+									}
+								}
+								join_start = true;
+							}
+							else
+							{
+								string t1 = belong_table(sets, target_attr);
+								string t2 = belong_table(sets, target_val);
+								for(int i = 0; i < results[t1].size(); ++i)
+								{
+									if(tables[t1][target_attr].at(results[t1].at(i)).compare(tables[t2][target_val].at(results[t2].at(i))) != 0)
+									{
+										results[t1].erase(results[t1].begin()+i);
+										results[t2].erase(results[t2].begin()+i);
+										i--;
+									}
+								}
+							}
+						}
+						if(!end)
+						  scanf("%s", tmp);		//exclude out AND
+					}
 				}
+
 			}
 
 		}
@@ -633,6 +777,17 @@ int main()
 		}
 		else	//with WHERE clause
 		{
+			if(q_attrs.at(0).compare("*") == 0)	//retrieve all attributes
+			{
+				q_attrs.pop_back();	//clear the query attribute *
+				for(int i = 0; i < q_tables.size(); ++i)
+				{
+					for(set<string>::iterator it = sets[q_tables.at(i)].begin(); it != sets[q_tables.at(i)].end(); ++it)
+					  q_attrs.push_back(*it);
+				}
+			}
+			if(q_tables.size() == 1)
+			{
 				string target_table(q_tables.at(0));
 				for(int i = 0; i < q_attrs.size(); ++i)
 				{
@@ -653,16 +808,57 @@ int main()
 					}
 					printf("\n");
 				}
-			
+			}
+			else
+			{
+				string target_table(q_tables.at(0));
+				for(int i = 0; i < q_attrs.size(); ++i)
+				{
+					if(q_attrs.at(i).compare("title") == 0)
+					  printf("%-65s", q_attrs.at(i).c_str());
+					else
+					  printf("%-25s", q_attrs.at(i).c_str());
+				}
+				printf("\n");
+				for(int i = 0; i < results[q_tables.at(0)].size(); ++i)
+				{
+					for(int j = 0; j < q_attrs.size(); ++j)
+				  	{
+						string t = belong_table(sets, q_attrs.at(j));
+						if(q_attrs.at(j).compare("title") == 0)
+						  printf("%-65s", tables[t][q_attrs.at(j)].at(results[t].at(i)).c_str());
+						else
+						  printf("%-25s", tables[t][q_attrs.at(j)].at(results[t].at(i)).c_str());
+					}
+					printf("\n");
+				}	
+			}
 		}
 
 		//clear the query vectors
+		if(q_tables.size() > 1)
+		{
+			while(!potential_can[q_tables.at(0)].empty())
+			  potential_can[q_tables.at(0)].pop_back();
+			while(!potential_can[q_tables.at(1)].empty())
+			  potential_can[q_tables.at(1)].pop_back();
+			while(!results[q_tables.at(0)].empty())
+			  results[q_tables.at(0)].pop_back();
+			while(!results[q_tables.at(1)].empty())
+			  results[q_tables.at(1)].pop_back();
+		}
 		while(!q_attrs.empty())
 		  q_attrs.pop_back();
 		while(!q_tables.empty())
 		  q_tables.pop_back();
 		while(!candidate.empty())
 		  candidate.pop_back();
+/*		try{
+				}catch(const out_of_range &oor)
+				{
+					cout << "OUT OF RANGE ERROR : " << oor.what() << endl;
+				}
+*/
 	}
 
 	return 0;
