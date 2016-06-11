@@ -762,16 +762,35 @@ int main()
 					  printf("%-25s", q_attrs.at(i).c_str());
 				}
 				printf("\n");
-				for(int i = 0; i < table_row_num[target_table]; ++i)
+				if(q_attrs.size() == 1 && distinct)	//if DISTINCT is set
 				{
-					for(int j = 0; j < q_attrs.size(); ++j)
-				  	{
-						if(q_attrs.at(j).compare("title") == 0)
-						  printf("%-65s", tables[target_table][q_attrs.at(j)].at(i).c_str());
-						else
-						  printf("%-25s", tables[target_table][q_attrs.at(j)].at(i).c_str());
+					set<string> used;
+					for(int i = 0; i < table_row_num[target_table]; ++i)
+					{
+						if(used.find(tables[target_table][q_attrs.at(0)].at(i)) == used.end())
+						{
+							used.insert(tables[target_table][q_attrs.at(0)].at(i));
+							if(q_attrs.at(0).compare("title") == 0)
+							  printf("%-65s", tables[target_table][q_attrs.at(0)].at(i).c_str());
+							else
+							  printf("%-25s", tables[target_table][q_attrs.at(0)].at(i).c_str());
+							printf("\n");
+						}
 					}
-					printf("\n");
+				}
+				else
+				{
+					for(int i = 0; i < table_row_num[target_table]; ++i)
+					{
+						for(int j = 0; j < q_attrs.size(); ++j)
+					  	{
+							if(q_attrs.at(j).compare("title") == 0)
+							  printf("%-65s", tables[target_table][q_attrs.at(j)].at(i).c_str());
+							else
+							  printf("%-25s", tables[target_table][q_attrs.at(j)].at(i).c_str());
+						}
+						printf("\n");
+					}
 				}
 			}
 		}
@@ -797,16 +816,35 @@ int main()
 					  printf("%-25s", q_attrs.at(i).c_str());
 				}
 				printf("\n");
-				for(int i = 0; i < candidate.size(); ++i)
+				if(q_attrs.size() == 1 && distinct)	//if DISTINCT is set
 				{
-					for(int j = 0; j < q_attrs.size(); ++j)
-				  	{
-						if(q_attrs.at(j).compare("title") == 0)
-						  printf("%-65s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)-1).c_str());
-						else
-						  printf("%-25s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)-1).c_str());
+					set<string> used;
+					for(int i = 0; i < candidate.size(); ++i)
+					{
+						if(used.find(tables[target_table][q_attrs.at(0)].at(candidate.at(i)-1)) == used.end())
+						{
+							used.insert(tables[target_table][q_attrs.at(0)].at(candidate.at(i)-1));
+							if(q_attrs.at(0).compare("title") == 0)
+							  printf("%-65s", tables[target_table][q_attrs.at(0)].at(candidate.at(i)-1).c_str());
+							else
+							  printf("%-25s", tables[target_table][q_attrs.at(0)].at(candidate.at(i)-1).c_str());
+							printf("\n");
+						}
 					}
-					printf("\n");
+				}
+				else
+				{
+					for(int i = 0; i < candidate.size(); ++i)
+					{
+						for(int j = 0; j < q_attrs.size(); ++j)
+					  	{
+							if(q_attrs.at(j).compare("title") == 0)
+							  printf("%-65s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)-1).c_str());
+							else
+							  printf("%-25s", tables[target_table][q_attrs.at(j)].at(candidate.at(i)-1).c_str());
+						}
+						printf("\n");
+					}
 				}
 			}
 			else
@@ -820,18 +858,38 @@ int main()
 					  printf("%-25s", q_attrs.at(i).c_str());
 				}
 				printf("\n");
-				for(int i = 0; i < results[q_tables.at(0)].size(); ++i)
+				if(q_attrs.size() == 1 && distinct)	//if DISTINCT is set
 				{
-					for(int j = 0; j < q_attrs.size(); ++j)
-				  	{
+					set<string> used;
+					for(int i = 0; i < results[q_tables.at(0)].size(); ++i)
+					{
 						string t = belong_table(sets, q_attrs.at(j));
-						if(q_attrs.at(j).compare("title") == 0)
-						  printf("%-65s", tables[t][q_attrs.at(j)].at(results[t].at(i)).c_str());
-						else
-						  printf("%-25s", tables[t][q_attrs.at(j)].at(results[t].at(i)).c_str());
+						if(used.find(tables[t][q_attrs.at(0)].at(results[t].at(i))) == used.end())
+						{
+							used.insert(tables[t][q_attrs.at(0)].at(results[t].at(i)));
+							if(q_attrs.at(0).compare("title") == 0)
+							  printf("%-65s", tables[t][q_attrs.at(0)].at(results[t].at(i)).c_str());
+							else
+							  printf("%-25s", tables[t][q_attrs.at(0)].at(results[t].at(i)).c_str());
+							printf("\n");
+						}
 					}
-					printf("\n");
-				}	
+				}
+				else
+				{
+					for(int i = 0; i < results[q_tables.at(0)].size(); ++i)
+					{
+						for(int j = 0; j < q_attrs.size(); ++j)
+					  	{
+							string t = belong_table(sets, q_attrs.at(j));
+							if(q_attrs.at(j).compare("title") == 0)
+							  printf("%-65s", tables[t][q_attrs.at(j)].at(results[t].at(i)).c_str());
+							else
+							  printf("%-25s", tables[t][q_attrs.at(j)].at(results[t].at(i)).c_str());
+						}
+						printf("\n");
+					}
+				}
 			}
 		}
 
