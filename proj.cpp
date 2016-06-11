@@ -6,7 +6,6 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <stdexcept>
 using namespace std;
 
 struct slot
@@ -911,13 +910,6 @@ int main()
 		  q_tables.pop_back();
 		while(!candidate.empty())
 		  candidate.pop_back();
-/*		try{
-				}catch(const out_of_range &oor)
-				{
-					cout << "OUT OF RANGE ERROR : " << oor.what() << endl;
-				}
-*/
 	}
-
 	return 0;
 }
