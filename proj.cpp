@@ -685,13 +685,16 @@ int main()
 								string t2 = belong_table(sets, target_val);
 								for(int i = 0; i < potential_can[t1].size(); ++i)
 								{
-									for(int j = 0; j < potential_can[t2].size(); ++j)
+									bucket = hash33(tables[t1][target_attr].at(potential_can[t1].at(i)).c_str());
+									struct slot *ptr = hash_table[target_val][bucket].head;
+									for(int j = 0; j < hash_table[target_val][bucket].num; ++j)
 									{
-										if(tables[t1][target_attr].at(potential_can[t1].at(i)).compare(tables[t2][target_val].at(potential_can[t2].at(j))) == 0)
+										if(tables[t1][target_attr].at(potential_can[t1].at(i)).compare(ptr->value) == 0)
 										{
 											results[t1].push_back(potential_can[t1].at(i));
-											results[t2].push_back(potential_can[t2].at(j));
+											results[t2].push_back(ptr->row - 1);
 										}
+										ptr = ptr->next;
 									}
 								}
 								join_start = true;
